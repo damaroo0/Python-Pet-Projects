@@ -1,0 +1,29 @@
+{
+    "difficulty_level":{
+        "easy":{
+            "map_size": {"x": 0, "y": 0, "end_x": 50, "end_y": 35, "depth": 0},
+            "min_partition_size": [9, 9],
+            "split_ratio": 0.5,
+            "random_factor": [-0.1, 0.1],
+            "max_connection_per_area": 2,
+            "max_recursion_depth": 3
+
+        },
+        "medium":{},
+        "hard":{}
+    },
+    "map_elements":{
+        "boundary":{
+            "vertical": "║",
+            "horizontal": "═",
+            "lu_corner": "╔",
+            "ll_corner": "╚",
+            "ru_corner": "╗",
+            "rl_corner": "╝"
+        },
+        "split_elements":{
+            "vertical": "|",
+            "horizontal": "—"
+        }
+    }
+}
