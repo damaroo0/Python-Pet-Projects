@@ -9,7 +9,7 @@ import random
 class MapGenerator:
     def __init__(self, json_data, all_end_spaces, map_size):
         self.json_data = json_data
-        self.current_direction = 'vertical'
+        self.current_direction = "vertical"
 
         # split elements configuration
         self.split_elements = self.json_data.get("map_elements").get("split_elements")
@@ -32,22 +32,25 @@ class MapGenerator:
 
     # function to prompt the user to choose a difficulty level
     def level_check(self):
-        available_levels = list(self.json_data.get('difficulty_level', {}).keys())
+        available_levels = list(self.json_data.get("difficulty_level", {}).keys())
         try:
             while True:
                 self.difficulty_level = input("Choose a difficulty level: ").lower()
                 if self.difficulty_level in available_levels:
                     self.definition_map_settings()
-                    self.bsp_splitting(current_space={
-                        'x': 0,
-                        'y': 0,
-                        'end_x': self.map_size['end_x'] + 2,
-                        'end_y': self.map_size['end_y'] + 2,
-                        'depth': 0
-                    }
+                    self.bsp_splitting(
+                        current_space={
+                            "x": 0,
+                            "y": 0,
+                            "end_x": self.map_size["end_x"] + 2,
+                            "end_y": self.map_size["end_y"] + 2,
+                            "depth": 0,
+                        }
                     )
                     break
-                print(f"We don't have your chosen level. You can choose one from: {available_levels}")
+                print(
+                    f"We don't have your chosen level. You can choose one from: {available_levels}"
+                )
         except KeyboardInterrupt:
             print("\nUser interrupted the program.")
         except Exception as e:
@@ -56,7 +59,9 @@ class MapGenerator:
     # definition of dependent elements
     def definition_map_settings(self):
         # retrieve data for the chosen difficulty level
-        self.difficulty_data = self.json_data["difficulty_level"].get(self.difficulty_level, {})
+        self.difficulty_data = self.json_data["difficulty_level"].get(
+            self.difficulty_level, {}
+        )
 
         self.max_recursion_depth = self.difficulty_data.get("max_recursion_depth", 1)
 
@@ -67,7 +72,7 @@ class MapGenerator:
         self.random_factor = self.difficulty_data.get("random_factor", None)
 
     def bsp_splitting(self, current_space):
-        if current_space['depth'] < self.max_recursion_depth:
+        if current_space["depth"] < self.max_recursion_depth:
             self.splitting(current_space)
         else:
             # adding a finite space to the list of spaces between which there will be rooms
@@ -77,56 +82,74 @@ class MapGenerator:
                 previous_space = self.subspace_stuck.pop()
                 self.bsp_splitting(previous_space)
             else:
-                print('The recursive maximum has been reached. Selecting game spaces...')
-                GameAreasChooser(self.all_end_spaces, self.json_data, self.map_size).point_relation_to_free_space()
+                print(
+                    "The recursive maximum has been reached. Selecting game spaces..."
+                )
+                GameAreasChooser(
+                    self.all_end_spaces, self.json_data, self.map_size
+                ).point_relation_to_free_space()
 
     def splitting(self, current_space):
         x, y, end_x, end_y, depth = current_space.values()
-        if self.current_direction == 'vertical':
-            split_x_point = round(x + (end_x - x) * (
-                    self.split_ratio + random.uniform(self.random_factor[0], self.random_factor[1])))
+        if self.current_direction == "vertical":
+            split_x_point = round(
+                x
+                + (end_x - x)
+                * (
+                    self.split_ratio
+                    + random.uniform(self.random_factor[0], self.random_factor[1])
+                )
+            )
             if split_x_point - x and end_x - split_x_point > self.min_partition_size[0]:
                 split_y_point = None
                 self.make_subspaces(current_space, split_x_point)
             else:
                 # because the space cannot be divided, we transfer it as the final format of the finished room
                 # we do the same thing in the case of horizontal space division
-                current_space['depth'] = self.max_recursion_depth
+                current_space["depth"] = self.max_recursion_depth
                 self.bsp_splitting(current_space)
-        elif self.current_direction == 'horizontal':
-            split_y_point = round(y + (end_y - y) * (
-                    self.split_ratio + random.uniform(self.random_factor[0], self.random_factor[1])))
+        elif self.current_direction == "horizontal":
+            split_y_point = round(
+                y
+                + (end_y - y)
+                * (
+                    self.split_ratio
+                    + random.uniform(self.random_factor[0], self.random_factor[1])
+                )
+            )
             if split_y_point - y and end_y - split_y_point > self.min_partition_size[1]:
                 split_x_point = None
                 self.make_subspaces(current_space, split_y_point)
             else:
-                current_space['depth'] += 1
+                current_space["depth"] += 1
                 self.bsp_splitting(current_space)
         else:
-            print(f"Cutting direction error. Current direction is: {self.current_direction}")
+            print(
+                f"Cutting direction error. Current direction is: {self.current_direction}"
+            )
 
     def make_subspaces(self, current_space, split_x_point=None, split_y_point=None):
         current_space_copy = current_space.copy()
-        current_space_copy['depth'] += 1
+        current_space_copy["depth"] += 1
 
         if split_x_point is not None:
             subspace1, subspace2 = current_space_copy.copy(), current_space_copy.copy()
-            subspace1['end_x'], subspace2['x'] = split_x_point - 1, split_x_point + 1
+            subspace1["end_x"], subspace2["x"] = split_x_point - 1, split_x_point + 1
 
             self.subspace_stuck.append(subspace1)
-            self.current_direction = 'horizontal'
+            self.current_direction = "horizontal"
             self.bsp_splitting(subspace2)
 
         elif split_y_point is not None:
             subspace1, subspace2 = current_space_copy.copy(), current_space_copy.copy()
-            subspace1['end_y'], subspace2['y'] = split_y_point - 1, split_y_point + 1
+            subspace1["end_y"], subspace2["y"] = split_y_point - 1, split_y_point + 1
 
             self.subspace_stuck.append(subspace1)
-            self.current_direction = 'vertical'
+            self.current_direction = "vertical"
             self.bsp_splitting(subspace2)
 
         else:
-            print('Error: No split points provided')
+            print("Error: No split points provided")
 
 
 # creating a chain of passageways between the main rooms
@@ -140,8 +163,10 @@ class GameAreasChooser(MapGenerator):
         self.blocked_spaces = ()
 
     def point_generation(self):
-        return (random.randint(self.map_size['x'], self.map_size['end_x']),
-                random.randint(self.map_size['y'], self.map_size['end_y']))
+        return (
+            random.randint(self.map_size["x"], self.map_size["end_x"]),
+            random.randint(self.map_size["y"], self.map_size["end_y"]),
+        )
 
     def point_relation_to_free_space(self):
         while self.free_spaces:
@@ -149,32 +174,41 @@ class GameAreasChooser(MapGenerator):
             if len(self.free_spaces) == 1:
                 self.game_spaces.append(self.free_spaces[0])
                 del self.free_spaces[0]
-                print('before else on function')
+                print("before else on function")
             else:
                 for index, space in enumerate(self.free_spaces):
-                    if space['x'] <= point[0] <= space['end_x'] and space['y'] <= point[1] <= space['end_y']:
+                    if (
+                        space["x"] <= point[0] <= space["end_x"]
+                        and space["y"] <= point[1] <= space["end_y"]
+                    ):
                         self.game_spaces.append(self.free_spaces[index])
                         del self.free_spaces[index]
 
                         for block_space_index in self.block_space():
                             del self.free_spaces[block_space_index]
         else:
-            print('Play spaces are spelled out. Creating passageways...')
-            PassageGeneration(self.all_end_spaces, self.json_data, self.map_size).area_picker()
+            print("Play spaces are spelled out. Creating passageways...")
+            PassageGeneration(
+                self.all_end_spaces, self.json_data, self.map_size
+            ).area_picker()
 
     def block_space(self):
         self.blocked_spaces = ()
 
         for index, space in enumerate(self.free_spaces):
-            if self.game_spaces[-1]['x'] == space['x'] and space['y'] in range(self.game_spaces[-1]['y'],
-                                                                               self.game_spaces[-1]['end_y']):
+            if self.game_spaces[-1]["x"] == space["x"] and space["y"] in range(
+                self.game_spaces[-1]["y"], self.game_spaces[-1]["end_y"]
+            ):
                 self.blocked_spaces.append(index)
-            elif self.game_spaces[-1]['y'] == space['y'] and space['x'] in range(self.game_spaces[-1]['x'],
-                                                                                 self.game_spaces[-1]['end_x']):
+            elif self.game_spaces[-1]["y"] == space["y"] and space["x"] in range(
+                self.game_spaces[-1]["x"], self.game_spaces[-1]["end_x"]
+            ):
                 self.blocked_spaces.append(index)
 
             self.blocked_spaces = sorted(self.blocked_spaces)
-            self.blocked_spaces = tuple(value - index for index, value in enumerate(self.blocked_spaces))
+            self.blocked_spaces = tuple(
+                value - index for index, value in enumerate(self.blocked_spaces)
+            )
 
             return self.blocked_spaces
 
@@ -183,7 +217,9 @@ class PassageGeneration(GameAreasChooser):
     def __init__(self, all_end_spaces, json_data, map_size):
         super().__init__(all_end_spaces, json_data, map_size)
 
-        self.max_connection_per_area = self.difficulty_data("max_connection_per_area", None)
+        self.max_connection_per_area = self.difficulty_data(
+            "max_connection_per_area", None
+        )
 
         self.picked_space1, self.picked_space2 = None, None
         self.used_combination = []
@@ -196,10 +232,14 @@ class PassageGeneration(GameAreasChooser):
             index2 = self.game_spaces[random.randint(0, len(self.game_spaces) - 1)]
 
             if index1 != index2 and (index1, index2) not in self.used_combination:
-                if (self.count_connections(index1) < self.max_connection_per_area and self.count_connections(index2)
-                        < self.max_connection_per_area):
+                if (
+                    self.count_connections(index1) < self.max_connection_per_area
+                    and self.count_connections(index2) < self.max_connection_per_area
+                ):
                     self.used_combination.append((index1, index2))
-                    self.choose_side(space1=self.game_spaces[index1], space2=self.game_spaces[index2])
+                    self.choose_side(
+                        space1=self.game_spaces[index1], space2=self.game_spaces[index2]
+                    )
                 else:
                     self.area_picker()
             else:
@@ -232,18 +272,20 @@ class PassageGeneration(GameAreasChooser):
         h_score = {start_point: self.manhattan_distance(start_point, end_point)}
         #
         f_score = {start_point: h_score[start_point]}
-        
+
         came_from = {}
 
         while open_notes:
-            current_point = min(open_notes,
-                                key=lambda point: self.manhattan_distance(start_point, point) + self.manhattan_distance(
-                                    point, end_point))
-            
+            current_point = min(
+                open_notes,
+                key=lambda point: self.manhattan_distance(start_point, point)
+                + self.manhattan_distance(point, end_point),
+            )
+
             if current_point == end_point:
                 path = self.reconstruct_path(came_from, end_point)
                 self.passages.append(path)
-                
+
                 return
 
             open_notes.remove(current_point)
@@ -257,18 +299,24 @@ class PassageGeneration(GameAreasChooser):
 
                 if neighbor_point not in open_notes:
                     open_notes.append(neighbor_point)
-                elif preliminary_assessment_g_score >= g_score.get(neighbor_point, float('inf')):
+                elif preliminary_assessment_g_score >= g_score.get(
+                    neighbor_point, float("inf")
+                ):
                     continue
-                
+
                 came_from[neighbor_point] = current_point
                 g_score[neighbor_point] = preliminary_assessment_g_score
-                h_score[neighbor_point] = self.manhattan_distance(neighbor_point, end_point)
-                f_score[neighbor_point] = g_score[neighbor_point] + h_score[neighbor_point]
+                h_score[neighbor_point] = self.manhattan_distance(
+                    neighbor_point, end_point
+                )
+                f_score[neighbor_point] = (
+                    g_score[neighbor_point] + h_score[neighbor_point]
+                )
 
         else:
             print("No path found")
-    
-    @staticmethod       
+
+    @staticmethod
     def reconstruct_path(came_from, end_point):
         path = [end_point]
         while end_point in came_from:
@@ -301,16 +349,22 @@ class PassageGeneration(GameAreasChooser):
         open_sides_space1 = self.check_space_sides(space1)
         open_sides_space2 = self.check_space_sides(space2)
 
-        min_distance = float('inf')
+        min_distance = float("inf")
         min_distance_sides = None
         for start_side in open_sides_space1:
             for end_side in open_sides_space2:
                 start_side_middle_point = (
-                    (start_side[0][0] + start_side[1][0]) // 2, (start_side[0][1] + start_side[1][1]) // 2)
+                    (start_side[0][0] + start_side[1][0]) // 2,
+                    (start_side[0][1] + start_side[1][1]) // 2,
+                )
                 end_side_middle_point = (
-                    (end_side[0][0] + end_side[1][0]) // 2, (end_side[0][1] + end_side[1][1]) // 2)
+                    (end_side[0][0] + end_side[1][0]) // 2,
+                    (end_side[0][1] + end_side[1][1]) // 2,
+                )
 
-                distance = self.manhattan_distance(start_side_middle_point, end_side_middle_point)
+                distance = self.manhattan_distance(
+                    start_side_middle_point, end_side_middle_point
+                )
 
                 if distance < min_distance:
                     min_distance = distance
@@ -322,23 +376,29 @@ class PassageGeneration(GameAreasChooser):
         sides = []
 
         # top side
-        if space['x'] != 0:
-            sides.append(((space['x'], space['y']), (space['end_x'], space['y'])))
+        if space["x"] != 0:
+            sides.append(((space["x"], space["y"]), (space["end_x"], space["y"])))
         # right side
-        if space['end_x'] != self.map_size['end_x']:
-            sides.append(((space['end_x'], space['y']), (space['end_x'], space['end_y'])))
+        if space["end_x"] != self.map_size["end_x"]:
+            sides.append(
+                ((space["end_x"], space["y"]), (space["end_x"], space["end_y"]))
+            )
         # left side
-        if space['y'] != 0:
-            sides.append(((space['x'], space['y']), (space['x'], space['end_y'])))
+        if space["y"] != 0:
+            sides.append(((space["x"], space["y"]), (space["x"], space["end_y"])))
         # bottom side
-        if space['end_y'] != self.map_size['end_y']:
-            sides.append(((space['x'], space['end_y']), (space['end_x'], space['end_y'])))
+        if space["end_y"] != self.map_size["end_y"]:
+            sides.append(
+                ((space["x"], space["end_y"]), (space["end_x"], space["end_y"]))
+            )
 
         return sides
 
     def make_points_on_side(self, sides):
         start_side, end_side = sides[0], sides[1]
-        start_side_points = self.points_on_side(start_side, self.direction_check(start_side))
+        start_side_points = self.points_on_side(
+            start_side, self.direction_check(start_side)
+        )
         end_side_points = self.points_on_side(end_side, self.direction_check(end_side))
 
         min_distance = None
@@ -357,12 +417,12 @@ class PassageGeneration(GameAreasChooser):
 
     @staticmethod
     def direction_check(side):
-        return 'x' if side[0][0] == side[1][0] else 'y'
+        return "x" if side[0][0] == side[1][0] else "y"
 
     @staticmethod
     def points_on_side(side, direction):
         points = []
-        if direction == 'x':
+        if direction == "x":
             for x in range(side[0][0] + 3, side[1][0] - 3):
                 points.append((x, side[0][1]))
         else:
@@ -374,32 +434,44 @@ class PassageGeneration(GameAreasChooser):
     def obstacles_point(self):
         for area in self.game_spaces:
             # add boundaries of areas
-            for y in range(area['y'], area['end_y'] + 1):
+            for y in range(area["y"], area["end_y"] + 1):
                 # check if the current point is not on the map boundary
-                if area['x'] != self.map_size['x'] and area['x'] != self.map_size['end_x']:
-                    self.obstacles.append((area['x'], y))
-                if area['end_x'] != self.map_size['x'] and area['end_x'] != self.map_size['end_x']:
-                    self.obstacles.append((area['end_x'], y))
+                if (
+                    area["x"] != self.map_size["x"]
+                    and area["x"] != self.map_size["end_x"]
+                ):
+                    self.obstacles.append((area["x"], y))
+                if (
+                    area["end_x"] != self.map_size["x"]
+                    and area["end_x"] != self.map_size["end_x"]
+                ):
+                    self.obstacles.append((area["end_x"], y))
 
-            for x in range(area['x'], area['end_x'] + 1):
+            for x in range(area["x"], area["end_x"] + 1):
                 # check if the current point is not on the map boundary
-                if area['y'] != self.map_size['y'] and area['y'] != self.map_size['end_y']:
-                    self.obstacles.append((x, area['y']))
-                if area['end_y'] != self.map_size['y'] and area['end_y'] != self.map_size['end_y']:
-                    self.obstacles.append((x, area['end_y']))
+                if (
+                    area["y"] != self.map_size["y"]
+                    and area["y"] != self.map_size["end_y"]
+                ):
+                    self.obstacles.append((x, area["y"]))
+                if (
+                    area["end_y"] != self.map_size["y"]
+                    and area["end_y"] != self.map_size["end_y"]
+                ):
+                    self.obstacles.append((x, area["end_y"]))
 
             # add boundaries of the map
-            for y in range(self.map_size['y'], self.map_size['end_y'] + 1):
-                if (self.map_size['x'], y) not in self.obstacles:
-                    self.obstacles.append((self.map_size['x'], y))
-                if (self.map_size['end_x'], y) not in self.obstacles:
-                    self.obstacles.append((self.map_size['end_x'], y))
+            for y in range(self.map_size["y"], self.map_size["end_y"] + 1):
+                if (self.map_size["x"], y) not in self.obstacles:
+                    self.obstacles.append((self.map_size["x"], y))
+                if (self.map_size["end_x"], y) not in self.obstacles:
+                    self.obstacles.append((self.map_size["end_x"], y))
 
-            for x in range(self.map_size['x'], self.map_size['end_x'] + 1):
-                if (x, self.map_size['y']) not in self.obstacles:
-                    self.obstacles.append((x, self.map_size['y']))
-                if (x, self.map_size['end_y']) not in self.obstacles:
-                    self.obstacles.append((x, self.map_size['end_y']))
+            for x in range(self.map_size["x"], self.map_size["end_x"] + 1):
+                if (x, self.map_size["y"]) not in self.obstacles:
+                    self.obstacles.append((x, self.map_size["y"]))
+                if (x, self.map_size["end_y"]) not in self.obstacles:
+                    self.obstacles.append((x, self.map_size["end_y"]))
 
     @staticmethod
     def manhattan_distance(point1, point2):
@@ -417,10 +489,10 @@ class MapVisualizer:
 
 
 # control part
-if __name__ == '__main__':
+if __name__ == "__main__":
     # read data from data.jsom
     try:
-        with open('data.json', 'r', encoding='utf-8') as file:
+        with open("data.json", "r", encoding="utf-8") as file:
             data = json.load(file)
 
         map_generator = MapGenerator(json_data=data, all_end_spaces=[], map_size=[])
